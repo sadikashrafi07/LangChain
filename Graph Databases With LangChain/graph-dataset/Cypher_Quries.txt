@@ -1,0 +1,40 @@
+Creating Nodes for Users:
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/sadikashrafi07/graph_dataset/main/Graph%20Databases%20With%20LangChain/graph-dataset/users.csv' AS row
+CREATE (:User {userId: toInteger(row.userId), name: row.name, age: toInteger(row.age), city: row.city});
+
+Creating Nodes for Posts and Adding Relationships:
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/sadikashrafi07/graph_dataset/main/Graph%20Databases%20With%20LangChain/graph-dataset/posts.csv' AS row
+MATCH (u:User {userId: toInteger(row.userId)})
+CREATE (u)-[:POSTED]->(:Post {postId: toInteger(row.postId), content: row.content, timestamp: datetime(row.timestamp)});
+
+Creating Relationships:
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/sadikashrafi07/graph_dataset/main/Graph%20Databases%20With%20LangChain/graph-dataset/relationships.csv' AS row
+MATCH (u1:User {userId: toInteger(row.userId1)}), (u2:User {userId: toInteger(row.userId2)})
+CREATE (u1)-[:FRIEND]->(u2)
+CREATE (u1)-[:LIKES]->(u2);
+
+Retrieving All User Nodes:
+MATCH (u:User)
+RETURN u;
+
+Retrieving All Post Nodes:
+MATCH (p:Post)
+RETURN p;
+
+Retrieving Friends of a Specific User:
+MATCH (u:User {name: "John"})-[:FRIEND]-(f:User)
+RETURN f.name;
+
+Retrieving Friends of a User and Their Posts:
+MATCH (u:User {name: "John"})-[:FRIEND]-(f:User)-[:POSTED]->(p:Post)
+RETURN f.name, p.content;
+
+Retrieving Users Who Liked Posts by a Specific User:
+MATCH (u:User {name: "John"})-[:POSTED]->(p:Post)<-[:LIKES]-(l:User)
+RETURN l.name, p.content;
+
+Counting and Ranking Users by Number of Friends:
+MATCH (u:User)-[:FRIEND]-(f:User)
+WITH u, COUNT(f) AS numberofFRIENDS
+RETURN u.name, numberofFRIENDS
+ORDER BY numberofFRIENDS DESC;
